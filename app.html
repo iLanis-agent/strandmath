@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strandmath - holiday light truth-teller</title>
+<style>
+:root{--bg:#0d1117;--card:#141b24;--ink:#e8eef5;--mut:#93a3b5;--amber:#f7d774;--line:#24313f;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:26px 14px 60px}
+main{max-width:880px;margin:0 auto}
+a.back{color:var(--mut);text-decoration:none;font-size:14px}
+h1{font-size:30px;margin:6px 0 2px}h1 span{color:var(--amber)}
+.sub{color:var(--mut);margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:19px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+label{display:block;color:var(--mut);font-size:13px;margin-bottom:4px}
+input,select{width:100%;background:#0f141b;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:16px}
+button.ghost{background:#1a2531;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer;margin:10px 6px 0 0}
+button.ghost:hover{border-color:var(--amber)}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:12px}
+.vc{background:#0f141b;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.vc .k{color:var(--mut);font-size:12px;letter-spacing:1px}
+.vc .n{font-size:24px;font-weight:700;margin:4px 0}
+.vc .h{color:var(--mut);font-size:13px}
+.vc.ok .n{color:var(--ok)}.vc.warn .n{color:var(--warn)}.vc.bad .n{color:var(--bad)}
+.note{color:var(--mut);font-size:13px;margin-top:10px}
+.err{display:none;background:#3a1220;border:1px solid var(--bad);color:#fecaca;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.bigverdict{border-radius:12px;padding:14px 18px;font-size:17px;font-weight:700;margin-top:14px;border:1px solid}
+.bigverdict.ok{background:#0f2b1c;border-color:var(--ok);color:var(--ok)}
+.bigverdict.warn{background:#2a2113;border-color:var(--warn);color:var(--warn)}
+.bigverdict.bad{background:#3a1220;border-color:var(--bad);color:var(--bad)}
+.bigverdict small{display:block;font-weight:400;font-size:14px;color:var(--ink);margin-top:4px;opacity:.85}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:600;font-size:12px;letter-spacing:.5px}
+#house{width:100%;display:block;margin:14px auto 0}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="index.html">&larr; Strandmath</a>
+<h1>Strand<span>math</span></h1>
+<p class="sub">The box says how many strands connect. Wattage gets a vote too. Everything updates live.</p>
+
+<div class="err" id="err"></div>
+
+<div class="card">
+<h2>1. The display</h2>
+<div class="grid">
+<div><label>Roofline (ft)</label><input id="roof" type="number" step="any" value="60"></div>
+<div><label>Windows &amp; doors (ft)</label><input id="win" type="number" step="any" value="40"></div>
+<div><label>Porch &amp; rails (ft)</label><input id="rail" type="number" step="any" value="20"></div>
+<div><label>Trees &amp; shrubs (ft)</label><input id="tree" type="number" step="any" value="80"></div>
+<div><label>Bulb type</label><select id="type">
+<option value="mini_led" selected>Mini LED (100 ct, ~5 W)</option>
+<option value="mini_inc">Mini incandescent (100 ct, ~40 W)</option>
+<option value="c9_led">C9 LED (25 ct, ~8 W)</option>
+<option value="c9_inc">C9 incandescent (25 ct, ~175 W)</option>
+<option value="icicle_led">Icicle LED (150 ct, ~6 W)</option>
+<option value="icicle_inc">Icicle incandescent (150 ct, ~72 W)</option>
+</select></div>
+</div>
+<p class="note">Strand specs are common retail figures (watts, lit length, connect limits) - check your box; the math updates with whatever you buy.</p>
+</div>
+
+<div class="card">
+<h2>2. Strands, runs and plugs</h2>
+<div class="verdicts">
+<div class="vc"><div class="k">LIT LENGTH</div><div class="n" id="vFt">-</div><div class="h">all zones combined</div></div>
+<div class="vc"><div class="k">STRANDS</div><div class="n" id="vStrands">-</div><div class="h" id="vStrandsH">rounded up, naturally</div></div>
+<div class="vc"><div class="k">TOTAL WATTS</div><div class="n" id="vWatts">-</div><div class="h" id="vWattsH">every strand at full draw</div></div>
+<div class="vc warn"><div class="k">SEPARATE RUNS</div><div class="n" id="vRuns">-</div><div class="h" id="vRunsH">plug-in points you actually need</div></div>
+</div>
+<div class="bigverdict" id="vCircuit"></div>
+<div class="grid" style="margin-top:12px">
+<div style="max-width:220px"><label>Breaker</label><select id="amps"><option value="15" selected>15 A circuit</option><option value="20">20 A circuit</option></select></div>
+<div style="max-width:220px"><label>Other load on it (W)</label><input id="other" type="number" step="any" value="0"></div>
+</div>
+<p class="note">Runs obey the stricter of the box's strand limit and the common 216 W-per-run guidance for light strings. The circuit check uses the published 80% continuous-load rule: 1440 W on a 15 A breaker.</p>
+<svg id="house" viewBox="0 0 860 210" role="img" aria-label="House outline with light runs"></svg>
+</div>
+
+<div class="card">
+<h2>3. The season cost</h2>
+<div class="grid">
+<div><label>Hours per night</label><input id="hrs" type="number" step="any" value="6"></div>
+<div><label>Days</label><input id="days" type="number" step="any" value="45"></div>
+<div><label>Rate ($/kWh)</label><input id="rate" type="number" step="any" value="0.17"></div>
+</div>
+<div class="verdicts">
+<div class="vc ok"><div class="k">SEASON ENERGY</div><div class="n" id="vKwh">-</div><div class="h">watts x hours x days</div></div>
+<div class="vc ok"><div class="k">SEASON COST</div><div class="n" id="vCost">-</div><div class="h">at your rate</div></div>
+<div class="vc"><div class="k">PER NIGHT</div><div class="n" id="vNight">-</div><div class="h">cost each evening</div></div>
+</div>
+<table id="cmp">
+<thead><tr><th>Same display, two bulb types</th><th>Watts</th><th>Runs</th><th>Season kWh</th><th>Season cost</th></tr></thead>
+<tbody></tbody>
+</table>
+<p class="note">LED vs incandescent on the same footage - the classic upgrade math, in dollars and plug-in runs.</p>
+</div>
+
+</main>
+<script src="engine.js?v=1"></script>
+<script>
+const $ = id => document.getElementById(id);
+function drawHouse(plan) {
+  const svg = $('house');
+  const runs = Math.min(plan.runs, 8);
+  let plugs = '';
+  for (let i = 0; i < runs; i++) {
+    const x = 180 + i * (500 / Math.max(1, runs - 1 || 1));
+    plugs += `<circle cx="${runs === 1 ? 430 : x}" cy="182" r="7" fill="#f7d774"/><text x="${runs === 1 ? 430 : x}" y="204" fill="#f7d774" font-size="11" text-anchor="middle">run ${i+1}</text>`;
+  }
+  svg.innerHTML = `
+    <path d="M 150 120 L 430 40 L 710 120" fill="none" stroke="#8ecdf0" stroke-width="3"/>
+    <rect x="180" y="120" width="500" height="60" fill="none" stroke="#24313f" stroke-width="3"/>
+    <rect x="230" y="135" width="60" height="35" fill="none" stroke="#8ecdf0" stroke-width="2"/>
+    <rect x="560" y="135" width="60" height="35" fill="none" stroke="#8ecdf0" stroke-width="2"/>
+    <rect x="400" y="135" width="50" height="45" fill="none" stroke="#8ecdf0" stroke-width="2"/>
+    <text x="430" y="28" fill="#93a3b5" font-size="12" text-anchor="middle">${plan.strands} strands, ${plan.bulbs.toLocaleString()} bulbs</text>
+    ${plugs}`;
+}
+function row(label, p, hrs, days, rate) {
+  const s = Strand.seasonCost(p.watts, hrs, days, rate);
+  return `<tr><td>${label}</td><td>${p.watts}</td><td>${p.runs}</td><td>${s.kwh.toFixed(1)}</td><td>$${s.usd.toFixed(2)}</td></tr>`;
+}
+function calc() {
+  const err = $('err');
+  const zones = ['roof','win','rail','tree'].map(id => +$(id).value);
+  const hrs = +$('hrs').value, days = +$('days').value, rate = +$('rate').value, other = +$('other').value;
+  if (zones.some(z => !isFinite(z) || z < 0 || z > 5000) || !isFinite(hrs) || hrs <= 0 || hrs > 24 ||
+      !isFinite(days) || days <= 0 || days > 365 || !isFinite(rate) || rate <= 0 || rate > 2 ||
+      !isFinite(other) || other < 0 || other > 3000 || zones.every(z => z === 0)) {
+    err.style.display = 'block';
+    err.textContent = 'Check the numbers: footage 0-5000 per zone (at least one zone), hours 1-24, days 1-365, rate and other load sensible.';
+    return;
+  }
+  err.style.display = 'none';
+  const totalFt = zones.reduce((a, b) => a + b, 0);
+  const key = $('type').value;
+  const p = Strand.plan(totalFt, key);
+  const cv = Strand.circuitVerdict(p.watts, other, +$('amps').value);
+  const sc = Strand.seasonCost(p.watts, hrs, days, rate);
+  $('vFt').textContent = Math.round(totalFt) + ' ft';
+  $('vStrands').textContent = p.strands;
+  $('vStrandsH').textContent = p.type.label;
+  $('vWatts').textContent = p.watts + ' W';
+  $('vWattsH').textContent = p.strands + ' strands x ' + p.type.watts + ' W';
+  $('vRuns').textContent = p.runs;
+  $('vRunsH').textContent = p.perRun + ' strands per run (' + p.limiting + ' limited)';
+  const v = $('vCircuit');
+  v.className = 'bigverdict ' + cv.band;
+  const msgs = {
+    ok: 'Circuit is happy',
+    warn: 'Circuit is near its continuous limit',
+    bad: 'Circuit cannot carry this continuously'
+  };
+  v.innerHTML = msgs[cv.band] + '<small>' + cv.used + ' W of lights' + (other ? ' + other load' : '') + ' against a ' + cv.limit + ' W continuous limit (' + $('amps').value + ' A breaker, 80% rule). ' +
+    (cv.band === 'bad' ? 'Split the display across circuits or go LED: the same footage in LED is a fraction of the draw.' : 'Headroom left: ' + Math.round(cv.headroom) + ' W.') + '</small>';
+  $('vKwh').textContent = Strand.fmt(sc.kwh, 1) + ' kWh';
+  $('vCost').textContent = '$' + sc.usd.toFixed(2);
+  $('vNight').textContent = '$' + (sc.usd / days).toFixed(2);
+  drawHouse(p);
+  // comparison: LED vs incandescent sibling for the same footage
+  const ledKey = key.includes('led') ? key : key.replace('_inc', '_led');
+  const incKey = key.includes('inc') ? key : key.replace('_led', '_inc');
+  const pl = Strand.plan(totalFt, ledKey), pi = Strand.plan(totalFt, incKey);
+  document.querySelector('#cmp tbody').innerHTML =
+    row(Strand.TYPES[ledKey].label, pl, hrs, days, rate) +
+    row(Strand.TYPES[incKey].label, pi, hrs, days, rate);
+}
+['roof','win','rail','tree','type','amps','other','hrs','days','rate'].forEach(id => $(id).addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
